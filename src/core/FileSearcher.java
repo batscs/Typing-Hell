@@ -24,7 +24,7 @@ public class FileSearcher {
 		
 		int rand = (int) (Math.random() * (linesOfFile - 0 + 1) + 0);
 		
-		for(int i = 0; i < rand; i++) {
+		for(int i = 0; i < rand - 1; i++) {
 			scan.nextLine();
 		}
 		

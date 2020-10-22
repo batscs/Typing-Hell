@@ -22,6 +22,7 @@ public class Tetris {
 				
 				gui.dropWords();
 				
+				
 				if (generate) {
 					gui.generateWordRandomColor();
 					generate = false;
@@ -31,7 +32,7 @@ public class Tetris {
 				
 				
 			}
-		}, 0, 500);
+		}, 0, 400);
 		
 	}
 
