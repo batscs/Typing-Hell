@@ -1,7 +1,6 @@
 package core;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 public class FileSearcher {
@@ -10,25 +9,24 @@ public class FileSearcher {
 	int linesOfFile = 871;
 	File config;
 	
+	String wordStringComplete;
+	String[] wordArray;
+	
+	@SuppressWarnings("resource")
 	public FileSearcher() {
-		config = new File("src/core/words.txt");
-		try {
-			scan = new Scanner(config);
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
+		wordStringComplete = new Scanner(Tetris.class.getResourceAsStream("words.txt"), "UTF-8").useDelimiter("999").next();
+		wordStringComplete = wordStringComplete.replace("\n", " ");
+		
+		wordArray = wordStringComplete.split(" ");
+		
 	}
 	
 	public String getRandomWord() {
 		
-		int rand = (int) (Math.random() * (linesOfFile - 0 + 1) + 0);
+		int rand = (int) (Math.random() * ((wordArray.length-1) - 0 + 1) + 0);
 		
-		for(int i = 0; i < rand - 1; i++) {
-			scan.nextLine();
-		}
-		
-		return scan.nextLine();
+		return wordArray[rand].replaceAll("\\s+", "");
 	}
 
 }

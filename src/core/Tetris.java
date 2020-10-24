@@ -6,33 +6,44 @@ import java.util.TimerTask;
 public class Tetris {
 	
 	static GUI gui;
-	static Timer game;
+	static Timer spawner;
+	static Timer dropper;
+	static Timer resizer;
 	static boolean generate = false;
+	
+	static int difficulty = 10;
+	static int maxDifficulty = 10;
 
 	public static void main(String[] args) {
 		
-		gui = new GUI();
+		gui = new GUI(800, 15);
 		gui.drawMatrix();
 		
-		game = new Timer();
-		game.scheduleAtFixedRate(new TimerTask() {
+		spawner = new Timer();
+		dropper = new Timer();
+		
+		spawner.scheduleAtFixedRate(new TimerTask() {
+			
+			@Override
+			public void run() {
+				int rand = (int) ((Math.random() * ((maxDifficulty - 1) + 1)) + 1);
+				
+				if (rand <= difficulty) {
+					gui.generateWordRandomColor();
+				}
+						
+			}
+		}, 0, 600);
+		
+		dropper.scheduleAtFixedRate(new TimerTask() {
 			
 			@Override
 			public void run() {
 				
 				gui.dropWords();
 				
-				
-				if (generate) {
-					gui.generateWordRandomColor();
-					generate = false;
-				} else  {
-					generate = true;
-				}
-				
-				
 			}
-		}, 0, 400);
+		}, 0, 500);
 		
 	}
 

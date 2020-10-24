@@ -18,32 +18,35 @@ public class GUI {
 	JFrame frame;
 	JPanel panel;
 	JTextField textfield;
-	
+
+	String frame_title = "Type Tetris |";
+	String frame_title_suffix = " | Made by: steambats";
+
 	int score = 0;
 
-	int matrixLength = 14;
-	
-	public boolean lost = false;
+	int matrixLength = 20;
 
-	JLabel label[] = new JLabel[matrixLength * matrixLength];
+	public boolean lost = true;
+
+	JLabel label[] = new JLabel[matrixLength * matrixLength + 1];
 	JLabel labelScore = new JLabel();
 	JLabel labelLost = new JLabel();
 
-	Font font = new Font("Trebuchet MS", Font.BOLD, 42);
-	
+	Font font;
+
 	SoundManager soundManager = new SoundManager();
 
-	public GUI() {
+	public GUI(int frameWidth, int matrixL) {
 
 		frame = new JFrame();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		frame.setSize(800, 900);
-		frame.setTitle("Type Tetris | Made by MAXOHNO");
+		frame.setSize(frameWidth, frameWidth + 40);
+		frame.setTitle(frame_title + " Difficulty: 0/10" + frame_title_suffix);
 		frame.setVisible(true);
 		frame.setResizable(false);
 		frame.setLocationRelativeTo(null);
-		
+
 		panel = (JPanel) frame.getContentPane();
 		panel.setBackground(Color.DARK_GRAY);
 		panel.setLayout(null);
@@ -53,6 +56,12 @@ public class GUI {
 			labels.setVisible(true);
 		}
 
+		// TODO
+		font = new Font("Trebuchet MS", Font.BOLD, 29);
+		
+		//frame.setIconImage(ImageIO.read(new File("src/core/logo.png")));
+		
+
 	}
 
 	public void drawMatrix() {
@@ -60,56 +69,67 @@ public class GUI {
 		drawTextField();
 		drawLabelScore();
 		drawLabelLost();
+		
+		textfield.setText("type: start <number>");
 	}
 
 	public void generateWord(Color color) {
 		if (lost) {
-			panel.setBackground(Color.red);
-			labelScore.setBackground(Color.red);
+			panel.setBackground(Color.decode("#8b0000"));
+			labelScore.setBackground(Color.decode("#8b0000"));
 			return;
 		}
+
+		// while (!foundPosition) {
+		FileSearcher fs = new FileSearcher();
+		String word = fs.getRandomWord();
+		String[] word_split = word.split("");
+		Color word_color = color;
+		Color tempForeground = Color.WHITE;
+
+		float[] hsb = Color.RGBtoHSB(color.getRed(), color.getBlue(), color.getGreen(), null);
 		
-		//while (!foundPosition) {
-			FileSearcher fs = new FileSearcher();
-			String word = fs.getRandomWord();
-			String[] word_split = word.split("");
-			Color word_color = color;
+		float brightness = hsb[2];
 
-			int x = (int) (Math.random() * (matrixLength - word_split.length - 0 + 1) + 0);
+		if (brightness < 0.9) {
+			tempForeground = Color.white;
+			
+		} else {
+			tempForeground = Color.black;
+			
+		}
 
-			int emptyCount = 0;
-			for (int i = x; i < x + word_split.length; i++) {
-				if (isJLabelEmpty(i)) {
-					emptyCount++;
-				}
+		int x = (int) (Math.random() * (matrixLength - word_split.length - 0 + 1) + 0);
+
+		int emptyCount = 0;
+		for (int i = x; i < x + word_split.length; i++) {
+			if (isJLabelEmpty(i)) {
+				emptyCount++;
 			}
+		}
 
-			if (emptyCount >= word_split.length) {
-				for (int i = 0; i < word_split.length; i++) {
-					changeJLabel(x + i, word_split[i], word_color);
-				}
-			} else {
-				lost = true;
+		if (emptyCount >= word_split.length) {
+			for (int i = 0; i < word_split.length; i++) {
+				changeJLabel(x + i, word_split[i], word_color);
+				changeJLabelForeground(x + i, tempForeground);
 			}
+		} else {
+			panel.setBackground(Color.decode("#8b0000"));
+			labelScore.setBackground(Color.decode("#8b0000"));
+			lost = true;
+		}
 
-			//failSafe--;
+		// failSafe--;
 
-			//if (failSafe <= 0) {
-				//foundPosition = true;
-			//}
+		// if (failSafe <= 0) {
+		// foundPosition = true;
+		// }
 
-		//}
+		// }
 
 	}
 
 	public void dropWords() {
-
-		// TODO: Probleme 2 fix:
-		// 1: Es ist ein Loop, die Schleife geht von oben nach unten durch, wenn etwas
-		// nach
-		// unten gesetzt wird, wird es gleich wieder erkannt und wieder nach unten
-		// gesetzt und immer wieder
-		// 2: Wenn currentIndex > matrixLength * matrixLength - matrixLength,dann return
 
 		int wordPos = -1, wordSize = -1;
 		Color currentColor = null;
@@ -192,6 +212,7 @@ public class GUI {
 	private void putLabelDown(int original, int destination) {
 		label[destination].setText(label[original].getText());
 		label[destination].setBackground(label[original].getBackground());
+		label[destination].setForeground(label[original].getForeground());
 
 		resetJLabel(original);
 	}
@@ -202,6 +223,16 @@ public class GUI {
 		} else {
 			return false;
 		}
+	}
+
+	private void resetMatrix() {
+		for (int i = 0; i < matrixLength * matrixLength; i++) {
+			resetJLabel(i);
+		}
+	}
+
+	public void changeJLabelForeground(int index, Color color) {
+		label[index].setForeground(color);
 	}
 
 	public void changeJLabel(int index, String text, Color color) {
@@ -233,22 +264,52 @@ public class GUI {
 
 	private void submitInput() {
 
+		String text = textfield.getText();
+		String[] text_splitted = text.split(" ");
+
 		if (lost) {
-			textfield.setText("you just lost | made by MAXOHNO");
+			if (text_splitted.length <= 1) {
+				if (text_splitted[0].equalsIgnoreCase("start")) {
+					resetMatrix();
+					lost = false;
+					int diff = 7;
+					Tetris.difficulty = diff;
+					panel.setBackground(Color.DARK_GRAY);
+					labelScore.setBackground(Color.DARK_GRAY);
+					textfield.setText("");
+					frame.setTitle(frame_title + " Difficulty: " + diff + "/10" + frame_title_suffix);
+
+					score = 0;
+					labelScore.setText("Score: " + score);
+
+				}
+			} else if (text_splitted.length > 1) {
+				if (text_splitted[0].equalsIgnoreCase("start")) {
+					resetMatrix();
+					lost = false;
+					int diff = Integer.parseInt(text_splitted[1]);
+					
+					if (diff > Tetris.maxDifficulty) {
+						diff = Tetris.maxDifficulty;
+					} else if (diff <= 0) {
+						diff = 7;
+					}
+					
+					Tetris.difficulty = diff;
+					panel.setBackground(Color.DARK_GRAY);
+					labelScore.setBackground(Color.DARK_GRAY);
+					textfield.setText("");
+					frame.setTitle(frame_title + " Difficulty: " + diff + "/10" + frame_title_suffix);
+
+					score = 0;
+					labelScore.setText("Score: " + score);
+				}
+			}
 			return;
 		}
-		
-		String text = textfield.getText();
 
-		if (text.equals("d")) {
-			dropWords();
-		} else if (text.equals("g")) {
+		searchForWord(text.replaceAll("\\s+", "").toLowerCase());
 
-			generateWordRandomColor();
-		}
-		
-		searchForWord(text.replaceAll("\\s+",""));
-		
 		SoundManager.playSound("sounds/change.wav", -20f);
 
 		textfield.setText("");
@@ -277,8 +338,8 @@ public class GUI {
 						// //////////////////////////////
 						// DROP DIESES WORT HIER LETS GO
 						if (wordPos != -1 && wordSize != -1) {
-							tempWord = tempWord.replaceAll("\\s+","");
-							if (tempWord.equals(word)) {
+							tempWord = tempWord.replaceAll("\\s+", "");
+							if (tempWord.toLowerCase().equals(word.toLowerCase())) {
 								clearJLabelRange(wordPos, wordSize);
 								JLabelScoreAdd(word.length());
 							}
@@ -305,8 +366,8 @@ public class GUI {
 					// //////////////////////////////
 					// DROP DIESES WORT HIER LETS GO
 					if (wordPos != -1 && wordSize != -1) {
-						tempWord = tempWord.replaceAll("\\s+","");
-						if (tempWord.equals(word)) {
+						tempWord = tempWord.replaceAll("\\s+", "");
+						if (tempWord.toLowerCase().equals(word.toLowerCase())) {
 							clearJLabelRange(wordPos, wordSize);
 							JLabelScoreAdd(word.length());
 						}
@@ -322,93 +383,87 @@ public class GUI {
 				}
 			}
 		}
-		
+
 		// ********************************************************************************
-				for (int i = matrixLength - 1; i > 0; i--) {
-					for (int j = 0; j <= matrixLength; j++) {
+		// Hier wird nur die letzte Zeile durchsucht
 
-						int currentIndex = ((i) * matrixLength) + j;
-						
-						if (currentIndex >= matrixLength * matrixLength) {
-							currentIndex = 195;
-						}
+		for (int i = 0; i <= matrixLength; i++) {
 
-						if (currentIndex >= matrixLength * matrixLength) {
-							System.out.println("current index too big");
-							return;
-						}
+			int currentIndex = (matrixLength * (matrixLength - 1)) + i;
 
-						if (getJLabelColor(currentIndex) != Color.black) {
-							if (getJLabelColor(currentIndex) != currentColor) {
-								currentColor = getJLabelColor(currentIndex);
+			if (getJLabelColor(currentIndex) != Color.black) {
+				if (getJLabelColor(currentIndex) != currentColor) {
+					currentColor = getJLabelColor(currentIndex);
 
-								// //////////////////////////////
-								// DROP DIESES WORT HIER LETS GO
-								if (wordPos != -1 && wordSize != -1) {
-									tempWord = tempWord.replaceAll("\\s+","");
-									if (tempWord.equals(word)) {
-										clearJLabelRange(wordPos, wordSize);
-										JLabelScoreAdd(word.length());
-									}
-								}
-								// //////////////////////////////
-
-								wordPos = currentIndex;
-								wordSize = -1;
-								tempWord = "";
-
-							} else {
-								// gleiche farbe, gleiches wort
-								if (wordSize == -1) {
-									wordSize = 0;
-									tempWord += label[currentIndex - 1].getText();
-								}
-
-								wordSize++;
-								tempWord += label[currentIndex].getText();
-							}
-
-						} else {
-
-							// //////////////////////////////
-							// DROP DIESES WORT HIER LETS GO
-							if (wordPos != -1 && wordSize != -1) {
-								tempWord = tempWord.replaceAll("\\s+","");
-								if (tempWord.equals(word)) {
-									clearJLabelRange(wordPos, wordSize);
-									JLabelScoreAdd(word.length());
-								}
-							}
-							// //////////////////////////////
-
-							wordPos = -1;
-							wordSize = -1;
-							tempWord = "";
-
-							// check if word can drop 1 zeile, if so do it
-
+					// //////////////////////////////
+					// DROP DIESES WORT HIER LETS GO
+					if (wordPos != -1 && wordSize != -1) {
+						tempWord = tempWord.replaceAll("\\s+", "");
+						if (tempWord.equals(word)) {
+							clearJLabelRange(wordPos, wordSize);
+							JLabelScoreAdd(word.length());
 						}
 					}
+					// //////////////////////////////
+
+					wordPos = currentIndex;
+					wordSize = -1;
+					tempWord = "";
+
+				} else {
+					// gleiche farbe, gleiches wort
+					if (wordSize == -1) {
+						wordSize = 0;
+						tempWord += label[currentIndex - 1].getText();
+					}
+
+					wordSize++;
+					tempWord += label[currentIndex].getText();
 				}
 
+			} else {
+
+				// //////////////////////////////
+				// DROP DIESES WORT HIER LETS GO
+				if (wordPos != -1 && wordSize != -1) {
+					tempWord = tempWord.replaceAll("\\s+", "");
+					if (tempWord.equals(word)) {
+						clearJLabelRange(wordPos, wordSize);
+						JLabelScoreAdd(word.length());
+					}
+				}
+				// //////////////////////////////
+
+				wordPos = -1;
+				wordSize = -1;
+				tempWord = "";
+
+				// check if word can drop 1 zeile, if so do it
+
+			}
+
+		}
+
 	}
-	
+
 	private void JLabelScoreAdd(int addition) {
-		score += addition;
+		score += addition * Tetris.difficulty;
 		labelScore.setText("Score: " + score);
 		panel.repaint();
 	}
 
 	private void clearJLabelRange(int pos, int size) {
-		for(int i = pos; i <= pos + size; i++) {
+		for (int i = pos; i <= pos + size; i++) {
 			resetJLabel(i);
 		}
-	} 
+	}
 
 	private void drawLabelScore() {
+		// TODO
+		
 		labelScore = new JLabel("Score: " + score);
 		labelScore.setVisible(true);
-		labelScore.setBounds(50, 10, 685, 50);
+		labelScore.setBounds(55, 10, 685, 50);
 		labelScore.setFont(font);
 		labelScore.setOpaque(true);
 		labelScore.setForeground(Color.white);
@@ -417,8 +472,8 @@ public class GUI {
 		panel.add(labelScore);
 		panel.repaint();
 	}
-	
-	private void drawLabelLost() { 
+
+	private void drawLabelLost() {
 		labelLost = new JLabel("GAME OVER YOU LOSE");
 		labelLost.setBounds(0, 300, 800, 200);
 		labelLost.setFont(font);
@@ -426,17 +481,26 @@ public class GUI {
 		labelLost.setForeground(Color.white);
 		labelLost.setBackground(Color.RED);
 		labelLost.setVisible(false);
-	
+
 		panel.add(labelLost);
 		panel.repaint();
 	}
-	
+
 	private void drawTextField() {
+		
+		// TODO
+		
 		textfield = new JTextField();
 		textfield.setVisible(true);
-		textfield.setBounds(50, 800, 685, 50);
+
+		int x = 55;
+		int y = 750;
+		int width = 680;
+		int height = (int) (frame.getWidth() * 0.05555555555);
+
+		textfield.setBounds(x, y, width, height);
 		textfield.setFont(font);
-		
+
 		textfield.addActionListener(new ActionListener() {
 
 			@Override
@@ -445,7 +509,7 @@ public class GUI {
 			}
 
 		});
-		
+
 		textfield.getDocument().addDocumentListener(new DocumentListener() {
 
 			@Override
@@ -457,7 +521,7 @@ public class GUI {
 
 			@Override
 			public void insertUpdate(DocumentEvent e) {
-				
+
 				SoundManager.playSound("sounds/type.wav", -20f);
 
 			}
@@ -469,20 +533,21 @@ public class GUI {
 
 		});
 
-
 		panel.add(textfield);
 		panel.repaint();
 	}
 
 	private void drawJLabels() {
+		
+		// TODO
 
-		int width = 49;
+		int width = (int) 34;
 
 		int xInc = width;
 		int yInc = width;
 
-		int xStart = 50;
-		int yStart = 20;
+		int xStart = 55;
+		int yStart = 25;
 
 		int y = yStart;
 		int x = xStart;
@@ -509,6 +574,8 @@ public class GUI {
 			panel.add(label[i]);
 
 		}
+
+		label[label.length - 1].setVisible(false);
 
 		panel.repaint();
 	}
