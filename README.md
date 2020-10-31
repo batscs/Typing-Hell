@@ -1,2 +1,2 @@
 # Download
-Download at my itch.io: https://steambats.itch.io/type-tetris
+Download at my itch.io: https://steambats.itch.io/typing-hell
