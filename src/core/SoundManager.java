@@ -10,6 +10,10 @@ import javax.sound.sampled.FloatControl;
 
 public class SoundManager {
 	
+	public static String type = "sounds/type.wav";
+	public static String change = "sounds/change.wav";
+	public static String remove = "sounds/remove.wav";
+	
 	public static synchronized void playSound(final String url, final float volumeStrength) {
 	     new Thread(new Runnable() {
 	     // The wrapper thread is unnecessary, unless it blocks on the
